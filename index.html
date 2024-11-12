@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Shop - Boutique en ligne</title>
+    <!-- Polices -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- CSS personnalisé -->
+    <link href="style.css" rel="stylesheet">
+    <!-- Vue.js -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+</head>
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header class="header">
+            <nav class="nav-container">
+                <div class="logo">
+                    E-Shop
+                </div>
+                <div class="nav-links">
+                    <a href="#" class="nav-link">Accueil</a>
+                    <a href="#" class="nav-link">Boutique</a>
+                    <a href="#" class="nav-link">Catégories</a>
+                    <a href="#" class="nav-link">Contact</a>
+                    <div class="cart-icon" @click="toggleCart">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span class="cart-count">{{ cartItemCount }}</span>
+                    </div>
+                </div>
+                <div class="burger-menu" @click="toggleMenu">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </nav>
+        </header>
+
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="hero-content">
+                <h1>Nouvelle Collection</h1>
+                <p>Découvrez nos derniers articles tendance</p>
+                <a href="#products" class="btn btn-primary">Voir la collection</a>
+            </div>
+        </section>
+
+        <!-- Catégories -->
+        <section class="categories">
+            <h2 class="section-title">Nos Catégories</h2>
+            <div class="category-grid">
+                <div v-for="category in categories" :key="category.id" class="category-card">
+                    <img :src="category.image" :alt="category.name" class="category-image">
+                    <div class="category-info">
+                        <h3>{{ category.name }}</h3>
+                        <a :href="category.link" class="btn btn-primary">Découvrir</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Produits -->
+        <section class="products" id="products">
+            <div class="products-header">
+                <h2>Nos Produits</h2>
+                <div class="filter-sort">
+                    <select v-model="sortBy" class="select-custom">
+                        <option value="default">Trier par</option>
+                        <option value="price-low">Prix croissant</option>
+                        <option value="price-high">Prix décroissant</option>
+                        <option value="name">Nom</option>
+                    </select>
+                    <select v-model="filterCategory" class="select-custom">
+                        <option value="all">Toutes les catégories</option>
+                        <option v-for="cat in categories" :key="cat.id" :value="cat.id">
+                            {{ cat.name }}
+                        </option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="products-grid">
+                <div v-for="product in filteredProducts" :key="product.id" class="product-card">
+                    <img :src="product.image" :alt="product.name" class="product-image">
+                    <span v-if="product.badge" class="product-badge">{{ product.badge }}</span>
+                    <div class="product-info">
+                        <h3 class="product-title">{{ product.name }}</h3>
+                        <p class="product-price">{{ formatPrice(product.price) }}</p>
+                        <div class="product-actions">
+                            <button @click="addToCart(product)" class="btn-primary">
+                                <i class="fas fa-shopping-cart"></i>
+                                <span class="default-text">Ajouter au panier</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Panier -->
+        <div class="cart-sidebar" :class="{ active: isCartOpen }">
+            <div class="cart-header">
+                <h2>Votre Panier</h2>
+                <button class="close-btn" @click="toggleCart">&times;</button>
+            </div>
+            <div class="cart-items">
+                <div v-if="cart.length === 0" class="empty-cart">
+                    <i class="fas fa-shopping-basket"></i>
+                    <p>Votre panier est vide</p>
+                </div>
+                <div v-else v-for="item in cart" :key="item.id" class="cart-item">
+                    <img :src="item.image" :alt="item.name" class="cart-item-image">
+                    <div class="cart-item-details">
+                        <h3>{{ item.name }}</h3>
+                        <p class="price">{{ formatPrice(item.price) }}</p>
+                        <div class="quantity-controls">
+                            <button @click="decreaseQuantity(item)">-</button>
+                            <span>{{ item.quantity }}</span>
+                            <button @click="increaseQuantity(item)">+</button>
+                        </div>
+                    </div>
+                    <button class="remove-item" @click="removeFromCart(item)">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+            <div v-if="cart.length > 0" class="cart-total">
+                <div class="subtotal">
+                    <span>Sous-total:</span>
+                    <span>{{ formatPrice(cartTotal) }}</span>
+                </div>
+                <div class="shipping">
+                    <span>Livraison:</span>
+                    <span>{{ formatPrice(shippingCost) }}</span>
+                </div>
+                <div class="total">
+                    <span>Total:</span>
+                    <span>{{ formatPrice(cartTotal + shippingCost) }}</span>
+                </div>
+                <button class="btn btn-primary checkout-btn" @click="checkout">
+                    Passer la commande
+                </button>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>À propos</h3>
+                    <ul>
+                        <li><a href="#">Notre histoire</a></li>
+                        <li><a href="#">Blog</a></li>
+                        <li><a href="#">Carrières</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Service Client</h3>
+                    <ul>
+                        <li><a href="#">Contact</a></li>
+                        <li><a href="#">Livraison</a></li>
+                        <li><a href="#">Retours</a></li>
+                        <li><a href="#">FAQ</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Légal</h3>
+                    <ul>
+                        <li><a href="#">Mentions légales</a></li>
+                        <li><a href="#">CGV</a></li>
+                        <li><a href="#">Confidentialité</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Newsletter</h3>
+                    <div class="newsletter-form">
+                        <input type="email" placeholder="Votre email" class="newsletter-input">
+                        <button class="btn btn-primary">S'inscrire</button>
+                    </div>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-facebook"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script src="app.js"></script>
+</body>
+</html>
