@@ -10,6 +10,11 @@ createApp({
             sortBy: 'default',
             filterCategory: 'all',
             searchQuery: '',
+            showSearchResults: false,
+            searchTimeout: null,
+            cursorX: 0,
+            cursorY: 0,
+            cursorVisible: true,
             categories: [
                 {
                     id: 1,
@@ -69,11 +74,7 @@ createApp({
                     description: "Sac à main en cuir synthétique",
                     stock: 12
                 }
-            ],
-            // Animation du curseur
-            cursorX: 0,
-            cursorY: 0,
-            cursorVisible: true
+            ]
         }
     },
 
@@ -117,10 +118,43 @@ createApp({
             }
             
             return products
+        },
+
+        searchResults() {
+            if (!this.searchQuery) return []
+            return this.filteredProducts.slice(0, 5)
         }
     },
 
     methods: {
+        // Gestion de la recherche
+        handleSearch() {
+            clearTimeout(this.searchTimeout)
+            this.searchTimeout = setTimeout(() => {
+                this.showSearchResults = this.searchQuery.length > 0
+            }, 300)
+        },
+
+        selectProduct(product) {
+            this.searchQuery = ''
+            this.showSearchResults = false
+            
+            const productElement = document.querySelector(`#product-${product.id}`)
+            if (productElement) {
+                productElement.scrollIntoView({ behavior: 'smooth' })
+                productElement.classList.add('highlight')
+                setTimeout(() => {
+                    productElement.classList.remove('highlight')
+                }, 2000)
+            }
+        },
+
+        closeSearchResults(event) {
+            if (!event.target.closest('.search-container')) {
+                this.showSearchResults = false
+            }
+        },
+
         // Gestion du panier
         toggleCart() {
             this.isCartOpen = !this.isCartOpen
@@ -155,19 +189,18 @@ createApp({
                 this.showNotification(`${product.name} ajouté au panier`)
             }
 
-            // Animation du bouton
             if (event) {
-                const button = event.currentTarget;
-                button.classList.add('clicked');
+                const button = event.currentTarget
+                button.classList.add('clicked')
                 
-                const originalText = button.innerHTML;
-                button.innerHTML = '<span class="success-text">✓ Ajouté</span>';
-                button.classList.add('added');
+                const originalText = button.innerHTML
+                button.innerHTML = '<span class="success-text">✓ Ajouté</span>'
+                button.classList.add('added')
                 
                 setTimeout(() => {
-                    button.classList.remove('clicked', 'added');
-                    button.innerHTML = originalText;
-                }, 1500);
+                    button.classList.remove('clicked', 'added')
+                    button.innerHTML = originalText
+                }, 1500)
             }
 
             product.stock--
@@ -216,14 +249,10 @@ createApp({
         toggleMenu() {
             this.isMenuOpen = !this.isMenuOpen
             const navLinks = document.querySelector('.nav-links')
-            if (this.isMenuOpen) {
-                navLinks.classList.add('active')
-            } else {
-                navLinks.classList.remove('active')
-            }
+            this.isMenuOpen ? navLinks.classList.add('active') : navLinks.classList.remove('active')
         },
 
-        // Fonctions utilitaires
+        // Utilitaires
         formatPrice(price) {
             return price.toLocaleString('fr-FR', {
                 style: 'currency',
@@ -238,19 +267,15 @@ createApp({
             
             document.body.appendChild(notification)
             
-            setTimeout(() => {
-                notification.classList.add('visible')
-            }, 100)
+            setTimeout(() => notification.classList.add('visible'), 100)
             
             setTimeout(() => {
                 notification.classList.remove('visible')
-                setTimeout(() => {
-                    notification.remove()
-                }, 300)
+                setTimeout(() => notification.remove(), 300)
             }, 3000)
         },
 
-        // Gestion du localStorage
+        // LocalStorage
         saveCart() {
             localStorage.setItem('cart', JSON.stringify(this.cart))
         },
@@ -259,17 +284,14 @@ createApp({
             const savedCart = localStorage.getItem('cart')
             if (savedCart) {
                 this.cart = JSON.parse(savedCart)
-                
                 this.cart.forEach(item => {
                     const product = this.products.find(p => p.id === item.id)
-                    if (product) {
-                        product.stock -= item.quantity
-                    }
+                    if (product) product.stock -= item.quantity
                 })
             }
         },
 
-        // Animation du curseur personnalisé
+        // Curseur personnalisé
         updateCursor(e) {
             this.cursorX = e.clientX
             this.cursorY = e.clientY
@@ -299,10 +321,12 @@ createApp({
 
         // Event listeners
         window.addEventListener('mousemove', this.updateCursor)
+        document.addEventListener('click', this.closeSearchResults)
         
         window.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && this.isCartOpen) {
-                this.toggleCart()
+            if (e.key === 'Escape') {
+                if (this.isCartOpen) this.toggleCart()
+                if (this.showSearchResults) this.showSearchResults = false
             }
         })
 
@@ -325,8 +349,9 @@ createApp({
     },
 
     unmounted() {
-        // Nettoyage des event listeners
+        // Nettoyage
         window.removeEventListener('mousemove', this.updateCursor)
+        document.removeEventListener('click', this.closeSearchResults)
         window.removeEventListener('keydown', this.handleEscape)
     }
 }).mount('#app')

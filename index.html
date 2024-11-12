@@ -26,15 +26,38 @@
                     <a href="#" class="nav-link">Boutique</a>
                     <a href="#" class="nav-link">Catégories</a>
                     <a href="#" class="nav-link">Contact</a>
+                    
+                    <!-- Ajouter la barre de recherche ici -->
+                    <div class="search-container">
+                        <input 
+                            type="text" 
+                            v-model="searchQuery" 
+                            @input="handleSearch"
+                            class="search-input" 
+                            placeholder="Rechercher..."
+                        >
+                        <i class="fas fa-search search-icon"></i>
+                        <!-- Résultats de recherche -->
+                        <div class="search-results" v-if="showSearchResults && filteredProducts.length > 0">
+                            <div 
+                                v-for="product in filteredProducts.slice(0, 5)" 
+                                :key="product.id" 
+                                class="search-result-item"
+                                @click="selectProduct(product)"
+                            >
+                                <img :src="product.image" :alt="product.name" class="search-result-image">
+                                <div class="search-result-info">
+                                    <h4>{{ product.name }}</h4>
+                                    <p>{{ formatPrice(product.price) }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                
                     <div class="cart-icon" @click="toggleCart">
                         <i class="fas fa-shopping-cart"></i>
                         <span class="cart-count">{{ cartItemCount }}</span>
                     </div>
-                </div>
-                <div class="burger-menu" @click="toggleMenu">
-                    <span></span>
-                    <span></span>
-                    <span></span>
                 </div>
             </nav>
         </header>
